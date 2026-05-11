@@ -1,11 +1,3 @@
-<<<<<<< HEAD
-/**
- * Constantes globales du projet CPMS
- */
-
-// Rôles utilisateur
-=======
->>>>>>> dev
 exports.USER_ROLES = {
   ADMIN: "admin",
   ACCOUNTANT: "accountant",
@@ -13,41 +5,22 @@ exports.USER_ROLES = {
   TECHNICIAN: "technician",
 };
 
-<<<<<<< HEAD
-// Statuts utilisateur
-=======
->>>>>>> dev
 exports.USER_STATUS = {
   ACTIVE: "active",
   BLOCKED: "blocked",
 };
 
-<<<<<<< HEAD
-// Statuts client
-=======
->>>>>>> dev
 exports.CLIENT_STATUS = {
   ACTIVE: "actif",
   INACTIVE: "inactif",
 };
 
-<<<<<<< HEAD
-// Types de client
-exports.CLIENT_TYPES = {
-  PRIVATE: "prive",
-  BUSINESS: "entreprise",
-  FACTORY: "usine",
-};
-
-// Statuts compteur
-=======
 exports.CLIENT_TYPES = {
   PRIVATE: "prive",
   BUSINESS: "entreprise",
   FACTORY: "industries",
 };
 
->>>>>>> dev
 exports.METER_STATUS = {
   UNASSIGNED: "unassigned",
   ASSIGNED: "assigned",
@@ -55,10 +28,6 @@ exports.METER_STATUS = {
   INACTIVE: "inactive",
 };
 
-<<<<<<< HEAD
-// Statuts vente
-=======
->>>>>>> dev
 exports.SALE_STATUS = {
   PENDING: "pending",
   COMPLETED: "completed",
@@ -66,10 +35,6 @@ exports.SALE_STATUS = {
   FAILED: "failed",
 };
 
-<<<<<<< HEAD
-// Statuts token
-=======
->>>>>>> dev
 exports.TOKEN_STATUS = {
   UNUSED: "unused",
   USED: "used",
@@ -77,19 +42,11 @@ exports.TOKEN_STATUS = {
   CANCELLED: "cancelled",
 };
 
-<<<<<<< HEAD
-// Statuts tarif
-=======
->>>>>>> dev
 exports.RATE_STATUS = {
   ACTIVE: "active",
   INACTIVE: "inactive",
 };
 
-<<<<<<< HEAD
-// Statuts transaction
-=======
->>>>>>> dev
 exports.TRANSACTION_TYPE = {
   SALE: "sale",
   CONSUMPTION: "consumption",
@@ -124,18 +81,10 @@ exports.LIMITS = {
   MAX_FILE_SIZE_MB: 2,
 };
 
-<<<<<<< HEAD
-// Formats de fichier acceptés
-=======
->>>>>>> dev
 exports.ALLOWED_FILE_TYPES = {
   IMAGES: ["jpeg", "jpg", "png", "webp"],
 };
 
-<<<<<<< HEAD
-// Messages d'erreur courants
-=======
->>>>>>> dev
 exports.ERROR_MESSAGES = {
   MISSING_FIELDS: "Tous les champs sont requis",
   INVALID_EMAIL: "Format d'email invalide",

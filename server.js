@@ -1,5 +1,4 @@
 require("dotenv").config();
-<<<<<<< HEAD
 const express = require("express");
 const multer = require("multer"); 
 const connectDB = require("./SRC/config/db");
@@ -71,7 +70,7 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 7000;
 app.listen(PORT, () => {
   console.log(`Serveur lancé sur le port ${PORT}`);
-=======
+});
 const http = require("http");
 const createApp = require("./SRC/jobs/app");
 const { logger } = require("./SRC/jobs/logger");
@@ -109,5 +108,4 @@ startServer();
 
 connectDB().catch((error) => {
   logger.error("Database connection failed", { error: error.message });
->>>>>>> dev
 });
