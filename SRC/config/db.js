@@ -6,7 +6,7 @@ const connectDB = async () => {
     console.log("MongoDB connecté");
   } catch (err) {
     console.error(err);
-    setTimeout(connectDB, 5000); // retry après 5s
+    setTimeout(connectDB, 5000);
   }
 };
 

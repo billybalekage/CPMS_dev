@@ -21,10 +21,10 @@ class TokenGeneratorService {
    */
   generateToken(params) {
     const {
-      saleId,
+      saleId, 
       meterId,
       meterNumber,
-      clientType,
+      clientType, 
       clientId,
       amount,
     } = params;
@@ -33,8 +33,7 @@ class TokenGeneratorService {
       throw new Error("Tous les paramètres sont requis pour générer un token");
     }
 
-    // 1. Créer une signature avec les paramètres
-    const dataToHash = `${saleId}:${meterId}:${meterNumber}:${clientType}:${clientId}:${amount}:${Date.now()}`;
+    const dataToHash = `${saleId}:${meterId}:${meterNumber || ""}:${clientType}:${clientId}:${amount}`;
 
     // 2. Générer un HMAC-SHA256 avec la clé secrète
     const hmac = crypto
@@ -42,14 +41,9 @@ class TokenGeneratorService {
       .update(dataToHash)
       .digest("hex");
 
-    // 3. Générer 20 chiffres : 10 du timestamp + 10 du hash
-    // Prendre 10 chiffres du timestamp (Date.now())
-    const timestampDigits = Math.floor(Date.now() % 10000000000).toString().padStart(10, '0');
-    
-    // Convertir les 20 premiers caractères du hash hex en chiffres
+    // 3. Générer un token stable de 20 chiffres
     const hashDigits = this.hexToDigits(hmac.substring(0, 20), 10);
-    
-    const token = `${timestampDigits}${hashDigits}`;
+    const token = hashDigits.padStart(20, "0");
 
     return token;
   }

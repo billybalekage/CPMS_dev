@@ -40,13 +40,13 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["admin", "accountant", "sales", "technician"],
+      enum: ["admin", "accountant", "sales", "technician", "superAdmin"],
       default: "technician",
     },
 
     status: {
       type: String,
-      enum: ["active", "blocked"],
+      enum: ["active", "inactive", "blocked"],
       default: "active",
     },
 
@@ -62,6 +62,10 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+userSchema.index({ email: 1 });
+userSchema.index({ role: 1, status: 1 });
+userSchema.index({ createdAt: -1 });
 
 const UserModel = mongoose.models.User || mongoose.model("User", userSchema);
 

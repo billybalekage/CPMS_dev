@@ -1,0 +1,321 @@
+Rapport détaillé du backend CPMS
+================================
+
+1. Présentation générale
+-----------------------
+Le backend du projet CPMS est une API Node.js/Express connectée à une base de données MongoDB via Mongoose. Il sert à gérer les modules suivants :
+- authentification et gestion des administrateurs,
+- gestion des utilisateurs internes (comptables, commerciaux, techniciens),
+- gestion des clients,
+- gestion des compteurs,
+- gestion des tarifs,
+- gestion des ventes et des tokens,
+- tableau de bord et statistiques.
+
+L’architecture suit une logique classique en couches :
+- routes : définition des endpoints HTTP,
+- contrôleurs : logique métier,
+- modèles Mongoose : structure des données,
+- middlewares : sécurité, authentification, upload, gestion d’erreurs,
+- services : traitements annexes (email, OTP, token, upload).
+
+2. Fonctionnement des modules
+----------------------------
+
+2.1 Module d’authentification
+--------------------------------
+Ce module est défini dans les fichiers :
+- server.js
+- SRC/routes/auth.Route.js
+- SRC/controllers/auth.controller.js
+- SRC/middlewares/authMiddlewares.js
+- SRC/middlewares/roleMiddleware.js
+
+Fonctionnement :
+- L’application expose des routes publiques comme /login, /verify-2fa, /send-reset-otp et /reset-password.
+- Les routes sensibles nécessitent un JWT envoyé soit dans un cookie, soit dans l’en-tête Authorization.
+- Le middleware userAuth vérifie le token, charge l’utilisateur depuis la base et injecte ses informations dans la requête.
+- Le middleware authorize vérifie ensuite que l’utilisateur possède le bon rôle pour accéder à la route.
+
+Fonctionnalités principales :
+- inscription d’un administrateur,
+- connexion administrateur,
+- vérification en deux étapes (2FA) via OTP,
+- vérification de compte par email,
+- réinitialisation du mot de passe,
+- déconnexion,
+- consultation et mise à jour du profil.
+
+Point important :
+- La logique d’authentification repose sur des cookies HTTP-only et des JWT, ce qui est une bonne pratique pour limiter les accès côté navigateur.
+
+2.2 Module des utilisateurs internes
+-----------------------------------
+Ce module est géré par :
+- SRC/controllers/user.Controller.js
+- SRC/routes/user.Route.js
+- SRC/models/User.js
+
+Fonctionnement :
+- L’administrateur peut créer des utilisateurs avec des rôles restreints : accountant, sales, technician.
+- Les comptes internes peuvent être activés, désactivés ou supprimés.
+- Le système prend en charge la création d’un mot de passe temporaire, l’envoi d’un email d’invitation et éventuellement l’activation de la vérification email/2FA.
+
+Fonctions principales :
+- création d’un utilisateur,
+- connexion utilisateur,
+- récupération de la liste paginée des utilisateurs,
+- consultation d’un utilisateur par ID,
+- mise à jour des informations,
+- changement de mot de passe,
+- bascule du statut actif/inactif,
+- suppression du compte.
+
+2.3 Module des clients
+----------------------
+Ce module est défini dans :
+- SRC/controllers/client.controller.js
+- SRC/routes/client.Route.js
+- SRC/models/clients.js
+
+Fonctionnement :
+- Un client est créé en associant un compteur déjà existant.
+- Le système détermine automatiquement le type du client à partir du numéro du compteur :
+  - 12 => privé,
+  - 24 => entreprise,
+  - 30 => usine.
+- Le client est lié à un compteur et le statut du compteur passe à “assigned”.
+
+Fonctions principales :
+- création de client,
+- récupération du type à partir du numéro de compteur,
+- liste paginée des clients avec filtres,
+- consultation d’un client,
+- mise à jour du client,
+- changement de compteur,
+- changement de statut,
+- suppression d’un client.
+
+2.4 Module des compteurs
+------------------------
+Ce module est défini dans :
+- SRC/controllers/meter.controller.js
+- SRC/routes/meter.Route.js
+- SRC/models/Meter.js
+
+Fonctionnement :
+- Les compteurs sont créés avec un numéro unique, une localisation et un modèle.
+- Ils peuvent être associés à un client ou rester non attribués.
+- Le statut du compteur est utilisé pour savoir s’il est libre ou assigné.
+
+Fonctions principales :
+- création de compteur,
+- liste de compteurs,
+- consultation d’un compteur,
+- attribution d’un compteur à un client,
+- suppression si le compteur n’est pas attribué.
+
+2.5 Module des tarifs
+---------------------
+Ce module est défini dans :
+- SRC/controllers/rate.controller.js
+- SRC/routes/rate.Route.js
+- SRC/models/Rate.js
+
+Fonctionnement :
+- Les tarifs définissent le prix, le crédit, le type de client et leur statut actif/inactif.
+- Ils servent de base au calcul du crédit lors d’une vente.
+
+Fonctions principales :
+- création d’un tarif,
+- liste des tarifs avec filtres,
+- consultation d’un tarif,
+- mise à jour d’un tarif,
+- suppression d’un tarif,
+- récupération des tarifs actifs par type de client.
+
+2.6 Module des ventes
+---------------------
+Ce module est défini dans :
+- SRC/controllers/sale.controller.js 
+- SRC/routes/sale.Route.js
+- SRC/models/Sale.js
+- SRC/models/Token.js
+
+Fonctionnement :
+- Lorsqu’une vente est créée, le système vérifie :
+  - l’existence du client,
+  - l’existence du tarif,
+  - l’attribution d’un compteur au client,
+  - la cohérence entre le type de client et le tarif,
+  - la validité du montant et du crédit.
+- Le système calcule ensuite le crédit distribué à partir du tarif et du montant.
+- Une vente génère automatiquement un token associé.
+- La vente passe en statut completed lorsqu’elle est liée à un token.
+
+Fonctions principales :
+- création d’une vente,
+- liste paginée des ventes,
+- recherche d’une vente par ID,
+- consultation des ventes d’un client,
+- annulation d’une vente.
+
+2.7 Module du tableau de bord
+-----------------------------
+Ce module est défini dans :
+- SRC/controllers/dashboard.controller.js
+- SRC/routes/dashboard.Route.js
+
+Fonctionnement :
+- Le dashboard agrège des informations sur :
+  - clients,
+  - compteurs,
+  - ventes,
+  - revenus,
+  - tokens,
+  - utilisateurs,
+  - tarifs.
+- Il fournit des métriques et des alertes système pour aider à la supervision.
+
+3. Sécurité mise en place
+------------------------
+
+3.1 Authentification et autorisation
+-----------------------------------
+- Utilisation de JWT pour sécuriser les routes.
+- Vérification du token via un middleware dédié.
+- Contrôle des rôles par le middleware authorize.
+- Protection des routes sensibles pour l’administration.
+
+3.2 Protection contre les attaques courantes
+-------------------------------------------
+- Limitation des tentatives de connexion avec express-rate-limit.
+- Utilisation de cookies HTTP-only pour empêcher l’accès aux tokens depuis JavaScript côté navigateur.
+- Vérification de l’email et du mot de passe lors des opérations sensibles.
+- Restriction des types de fichiers uploadés via multer.
+- Limitation de la taille des uploads à 2 Mo.
+
+3.3 Protection des mots de passe
+--------------------------------
+- Les mots de passe sont hashés avec bcrypt.
+- Les hashs ne sont pas renvoyés dans les réponses JSON.
+- Les opérations de connexion et de changement de mot de passe utilisent des comparaisons sécurisées.
+
+3.4 Protection des données sensibles
+-----------------------------------
+- Les OTP et les codes d’authentification sont stockés en base avec une durée d’expiration.
+- Les images de profil sont envoyées vers Cloudinary plutôt qu’en base locale.
+- Les réponses sensibles n’exposent pas de mot de passe en clair.
+
+4. Points forts du backend
+--------------------------
+- Architecture claire et séparation des responsabilités.
+- Module d’authentification et d’autorisation relativement bien structuré.
+- Gestion correcte des formulaires et des uploads.
+- Utilisation de Mongoose et d’Express pour un développement rapide.
+- Mise en place d’un dashboard de suivi et de statistiques.
+- Bonne logique métier pour l’association client-compteur-tarif-vente.
+
+5. Problèmes et limites actuels
+------------------------------
+Même si le backend est fonctionnel, plusieurs points méritent une amélioration :
+
+5.1 Cohérence des données et des statuts
+---------------------------------------
+- Certains statuts sont utilisés de façon différente selon les modules (active/inactive/blocked/actif/inactif).
+- Cette incohérence crée un risque d’erreurs et de confusion dans les traitements.
+
+5.2 Gestion d’erreurs globale
+-----------------------------
+- Le système dispose d’un middleware d’erreurs global, mais certaines routes continuent à gérer les erreurs localement de façon dispersée.
+- Cela rend la maintenance plus difficile et la réponse API moins uniforme.
+
+5.3 Logs et monitoring
+----------------------
+- Les logs sont basiques et écrits dans la console.
+- Il n’existe pas encore de système de monitoring centralisé, d’alerting ou d’enregistrement avancé dans un outil dédié.
+
+5.4 Pagination et filtres
+------------------------
+- La pagination et les filtres sont déjà partiellement présents sur plusieurs modules, mais ils ne sont pas intégrés de façon uniforme dans toutes les routes.
+- Certaines routes renvoient encore des résultats simples sans pagination ni recherche avancée.
+
+5.5 Transactions et cohérence multi-documents
+---------------------------------------------
+- Les opérations critiques comme la création d’une vente impliquent plusieurs écritures en base.
+- Elles doivent être protégées par des transactions MongoDB pour éviter les incohérences si une étape échoue.
+
+5.6 Sécurité renforçable
+------------------------
+- Le système pourrait intégrer :
+  - validation centralisée des entrées,
+  - rate limiting plus fin par utilisateur et par route,
+  - contrôle de l’IP et de l’agent utilisateur,
+  - journalisation plus détaillée des actions sensibles,
+  - gestion des secrets via un vault ou des variables d’environnement mieux centralisées.
+
+6. Améliorations possibles
+-------------------------
+
+6.1 Ajouter un middleware d’erreurs global plus robuste
+------------------------------------------------------
+- Uniformiser toutes les réponses d’erreur.
+- Standardiser les codes HTTP (400, 401, 403, 404, 409, 422, 500).
+- Ajouter des messages explicites et une trace d’erreur sécurisée.
+
+6.2 Ajouter des index MongoDB
+-----------------------------
+Les champs suivants devraient être indexés :
+- email dans User,
+- phone dans User,
+- meterNumber dans Meter,
+- meterNumber dans Client,
+- clientId, rateId, status, createdAt dans Sale,
+- clientType et status dans Rate,
+- code et expiresAt dans Token.
+
+Cela améliorerait la vitesse des requêtes et la performance globale.
+
+6.3 Améliorer le système de logs et de monitoring
+-------------------------------------------------
+- Intégrer Winston ou Pino pour des logs structurés.
+- Envoyer les logs vers un système comme Loki, Datadog, Sentry ou ELK.
+- Ajouter des métriques sur :
+  - latence des requêtes,
+  - erreurs 4xx/5xx,
+  - temps d’accès aux bases,
+  - volume des ventes et des connexions.
+
+6.4 Renforcer les filtres et pagination
+--------------------------------------
+- Ajouter des filtres avancés par date, statut, rôle, type de client, montant, etc.
+- Uniformiser le format de pagination sur toutes les routes.
+- Ajouter un tri configurable côté API.
+
+6.5 Renforcer la sécurité
+-------------------------
+- Ajouter une validation préalable des entrées via express-validator ou Joi.
+- Protéger les routes clés avec des refresh tokens.
+- Ajouter une politique stricte de CORS et de content security.
+- Mettre en place une gestion centralisée des secrets.
+
+6.6 Ajouter un healthcheck plus complet
+---------------------------------------
+- Ajouter un endpoint /health qui retourne également :
+  - état de la base MongoDB,
+  - statut des services critiques,
+  - uptime de l’application,
+  - version de l’API.
+
+7. Conclusion
+-------------
+Le backend CPMS présente une structure fonctionnelle, claire et adaptée à un système de gestion de compteur et de ventes. Il gère correctement les flux principaux de l’application, notamment l’authentification, les utilisateurs, les clients, les compteurs, les tarifs, les ventes et les statistiques.
+
+Cependant, pour passer à un niveau de production plus robuste, il serait important de renforcer :
+- la cohérence des données,
+- la sécurité,
+- la qualité des logs et du monitoring,
+- la performance via les index MongoDB,
+- la fiabilité avec les transactions et la standardisation des erreurs.
+
+Ce backend a donc une base solide, mais il nécessite encore quelques améliorations structurelles et de sécurité pour être réellement prêt pour un environnement de production plus exigeant.

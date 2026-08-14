@@ -1,8 +1,3 @@
-/**
- * Constantes globales du projet CPMS
- */
-
-// Rôles utilisateur
 exports.USER_ROLES = {
   ADMIN: "admin",
   ACCOUNTANT: "accountant",
@@ -10,26 +5,22 @@ exports.USER_ROLES = {
   TECHNICIAN: "technician",
 };
 
-// Statuts utilisateur
 exports.USER_STATUS = {
   ACTIVE: "active",
   BLOCKED: "blocked",
 };
 
-// Statuts client
 exports.CLIENT_STATUS = {
   ACTIVE: "actif",
   INACTIVE: "inactif",
 };
 
-// Types de client
 exports.CLIENT_TYPES = {
   PRIVATE: "prive",
   BUSINESS: "entreprise",
-  FACTORY: "usine",
+  FACTORY: "industries",
 };
 
-// Statuts compteur
 exports.METER_STATUS = {
   UNASSIGNED: "unassigned",
   ASSIGNED: "assigned",
@@ -37,7 +28,6 @@ exports.METER_STATUS = {
   INACTIVE: "inactive",
 };
 
-// Statuts vente
 exports.SALE_STATUS = {
   PENDING: "pending",
   COMPLETED: "completed",
@@ -45,7 +35,6 @@ exports.SALE_STATUS = {
   FAILED: "failed",
 };
 
-// Statuts token
 exports.TOKEN_STATUS = {
   UNUSED: "unused",
   USED: "used",
@@ -53,13 +42,11 @@ exports.TOKEN_STATUS = {
   CANCELLED: "cancelled",
 };
 
-// Statuts tarif
 exports.RATE_STATUS = {
   ACTIVE: "active",
   INACTIVE: "inactive",
 };
 
-// Statuts transaction
 exports.TRANSACTION_TYPE = {
   SALE: "sale",
   CONSUMPTION: "consumption",
@@ -94,12 +81,10 @@ exports.LIMITS = {
   MAX_FILE_SIZE_MB: 2,
 };
 
-// Formats de fichier acceptés
 exports.ALLOWED_FILE_TYPES = {
   IMAGES: ["jpeg", "jpg", "png", "webp"],
 };
 
-// Messages d'erreur courants
 exports.ERROR_MESSAGES = {
   MISSING_FIELDS: "Tous les champs sont requis",
   INVALID_EMAIL: "Format d'email invalide",

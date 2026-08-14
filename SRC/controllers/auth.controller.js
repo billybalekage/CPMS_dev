@@ -12,7 +12,6 @@ const { generateOTP } = require("../services/otpGenerator.service");
 // Register admin
 exports.registerUser = async (req, res) => {
   try {
-
     // recuperer les element dans la requette body (ici le model user)
     const { fullName, email, phone, address, password, status } = req.body;
 
@@ -31,11 +30,9 @@ exports.registerUser = async (req, res) => {
 
     // verifier longeurs de mot de pass
     if (password.length < 6) {
-      return res
-        .status(400)
-        .json({
-          message: "Le mot de passe doit contenir au moins 6 caractères",
-        });
+      return res.status(400).json({
+        message: "Le mot de passe doit contenir au moins 6 caractères",
+      });
     }
 
     // Verifier si l'email existe deja dans la base de donnees
@@ -60,7 +57,6 @@ exports.registerUser = async (req, res) => {
       profileImagePublicId = result.public_id;
     }
 
-
     // Hasher mot de passe
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -79,16 +75,20 @@ exports.registerUser = async (req, res) => {
           }
         : {},
       status,
-      role: "admin",
-      isAccountVerified: false, 
+      role: "admin", // Forcere le role sur cette route
+      isAccountVerified: false,
     });
 
     await user.save(); // Enregister le nouveau user
 
     // Generer le token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      },
+    );
 
     // Enregistrer le token dans les cookies
     res.cookie("token", token, {
@@ -97,7 +97,6 @@ exports.registerUser = async (req, res) => {
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-
 
     // email de bienvenus
     transporter
@@ -109,16 +108,11 @@ exports.registerUser = async (req, res) => {
       })
       .catch((err) => console.error("Email Error:", err));
 
-    
-    // SMS de bienvenue
+    const { password: _, ...userWithoutPassword } = user.toObject(); // supprimer le mot de passe dans la response
 
-
-    const { password: _, ...userWithoutPassword } = user.toObject();
-
-    //returner une reponse 
     res.status(201).json({
       message: "Utilisateur enregistré avec succès",
-      user: userWithoutPassword,
+      user: userWithoutPassword, // pas de mot de pass dans la response
       token,
     });
   } catch (error) {
@@ -132,8 +126,6 @@ exports.registerUser = async (req, res) => {
 // Connection admin
 exports.loginUser = async (req, res) => {
   try {
-
-
     const { email, password } = req.body;
 
     //  Validation des champs
@@ -149,16 +141,15 @@ exports.loginUser = async (req, res) => {
     // netoyer l'email
     const cleanEmail = validator.normalizeEmail(email) || email.toLowerCase();
 
-    // On sélectionne le mot de passe 
+    // On sélectionne le mot de passe
     const user = await UserModel.findOne({ email: cleanEmail }).select(
       "+password",
     );
 
-    // vérification de l'existence et du rôle
-    if (!user || user.role !== "admin") {
-      return res.status(403).json({
-        message: "Accès refusé",
-      });
+    if (!user) {
+      return res
+        .status(401)
+        .json({ message: "email ou mot de passe manquant" });
     }
 
     // Vérification du mot de passe
@@ -173,7 +164,11 @@ exports.loginUser = async (req, res) => {
       const otp = generateOTP(6); // Generer un code de connexion a 6 chiffres
 
       // Supprimer les OTPs existants non utilisés pour ce type et utilisateur
-      await OtpModel.deleteMany({ userId: user._id, type: "two_factor", isUsed: false });
+      await OtpModel.deleteMany({
+        userId: user._id,
+        type: "two_factor",
+        isUsed: false,
+      });
 
       // Créer un nouvel OTP
       await OtpModel.create({
@@ -206,7 +201,7 @@ exports.loginUser = async (req, res) => {
 
     // 5. Génération du Token (Si pas de 2FA)
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d", 
+      expiresIn: "7d",
     });
 
     res.cookie("token", token, {
@@ -239,9 +234,7 @@ exports.verifyLoginOtp = async (req, res) => {
     const { userId, otp } = req.body;
 
     if (!userId || !otp) {
-      return res
-        .status(400)
-        .json({ message: "Données manquantes (ID ou Code)" });
+      return res.status(400).json({ message: "Données manquantes" });
     }
 
     const user = await UserModel.findById(userId);
@@ -266,6 +259,12 @@ exports.verifyLoginOtp = async (req, res) => {
     // GÉNÉRATION DU TOKEN FINAL
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
+    });
+
+    await OtpModel.deleteMany({
+      userId: user._id,
+      type: "email_verification",
+      isUsed: false,
     });
 
     // Stockage du token dans le cookie (Cohérence avec logout/login)
@@ -294,7 +293,6 @@ exports.verifyLoginOtp = async (req, res) => {
       .json({ message: "Erreur lors de la vérification 2FA" });
   }
 };
-
 
 // Deconnection de l'utilisateur ( supprimer le token du cookie)
 exports.logoutUser = (req, res) => {
@@ -328,7 +326,11 @@ exports.sendVerifyOtp = async (req, res) => {
     const otp = generateOTP(6);
 
     // Supprimer les OTPs existants non utilisés pour ce type et utilisateur
-    await OtpModel.deleteMany({ userId: user._id, type: "email_verification", isUsed: false });
+    await OtpModel.deleteMany({
+      userId: user._id,
+      type: "email_verification",
+      isUsed: false,
+    });
 
     // Créer un nouvel OTP
     await OtpModel.create({
@@ -346,7 +348,6 @@ exports.sendVerifyOtp = async (req, res) => {
       text: `Votre code de vérification est : ${otp}. Il expire dans 10 minutes.`,
     };
 
-
     // Envoi du mail
     try {
       await transporter.sendMail(mailOptions);
@@ -360,7 +361,6 @@ exports.sendVerifyOtp = async (req, res) => {
           "Erreur lors de l'envoi de l'email, veuillez réessayer plus tard",
       });
     }
-
   } catch (error) {
     console.error("Erreur dans sendVerifyOtp:", error);
     res.status(500).json({
@@ -373,7 +373,6 @@ exports.sendVerifyOtp = async (req, res) => {
 // Verifier le otp et verifier le compte
 exports.verifyEmail = async (req, res) => {
   try {
-
     // on recupere l'ID depuis le middleware
     const userId = req.userId;
     const { otp } = req.body; // otp stoke dans le body
@@ -465,7 +464,11 @@ exports.sendResetOtp = async (req, res) => {
     const otp = generateOTP(6);
 
     // Supprimer les OTPs existants non utilisés pour ce type et utilisateur
-    await OtpModel.deleteMany({ userId: user._id, type: "reset_password", isUsed: false });
+    await OtpModel.deleteMany({
+      userId: user._id,
+      type: "reset_password",
+      isUsed: false,
+    });
 
     // Créer un nouvel OTP
     await OtpModel.create({
@@ -474,7 +477,6 @@ exports.sendResetOtp = async (req, res) => {
       code: otp,
       expiresAt: new Date(Date.now() + 10 * 60 * 1000),
     });
-
 
     const mailOptions = {
       from: process.env.SENDER_EMAIL,
@@ -509,11 +511,9 @@ exports.resetPassword = async (req, res) => {
 
   // Vérification de la longueur du nouveau mot de passe
   if (newPassword.length < 6) {
-    return res
-      .status(400)
-      .json({
-        message: "Le mot de passe doit contenir au moins 6 caractères",
-      });
+    return res.status(400).json({
+      message: "Le mot de passe doit contenir au moins 6 caractères",
+    });
   }
 
   try {
@@ -534,7 +534,9 @@ exports.resetPassword = async (req, res) => {
     });
 
     if (!otpDoc) {
-      return res.status(400).json({ message: "Code de réinitialisation invalide ou expiré" });
+      return res
+        .status(400)
+        .json({ message: "Code de réinitialisation invalide ou expiré" });
     }
 
     // Hachage du nouveau mot de passe
@@ -588,14 +590,14 @@ exports.updateUser = async (req, res) => {
   } catch (error) {
     res
       .status(500)
-      .json({ message: "Erreur mis a jour profil", error: error.message });   
+      .json({ message: "Erreur mis a jour profil", error: error.message });
   }
 };
 
 // Changer des mot de pass
 exports.changePassword = async (req, res) => {
   try {
-    const { oldPassword, newPassword } = req.body; 
+    const { oldPassword, newPassword } = req.body;
 
     // Validation des entrées
     if (!oldPassword || !newPassword) {
@@ -678,15 +680,15 @@ exports.updateProfileImage = async (req, res) => {
         {
           folder: "cpms_profiles",
           transformation: [
-            { width: 500, height: 500, crop: "fill", gravity: "face" }, 
+            { width: 500, height: 500, crop: "fill", gravity: "face" },
           ],
         },
         (error, result) => {
           if (error) reject(error);
-          else resolve(result); 
+          else resolve(result);
         },
       );
-      uploadStream.end(req.file.buffer); 
+      uploadStream.end(req.file.buffer);
     });
 
     // Mise à jour en base de données
@@ -706,7 +708,7 @@ exports.updateProfileImage = async (req, res) => {
   }
 };
 
-// Suprimer le user. 
+// Suprimer le user.
 exports.deleteAccount = async (req, res) => {
   try {
     const userId = req.userId;
@@ -720,7 +722,6 @@ exports.deleteAccount = async (req, res) => {
     // Supprimer l'image sur Cloudinary si elle existe
     if (user.profileImage && user.profileImage.includes("cloudinary")) {
       try {
-        
         const publicId = getPublicIdFromUrl(user.profileImage);
 
         // 'cpms_profiles/' si getPublicId ne le fait pas
@@ -739,7 +740,7 @@ exports.deleteAccount = async (req, res) => {
     res.clearCookie("token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", 
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     });
 
     return res.status(200).json({
@@ -754,7 +755,3 @@ exports.deleteAccount = async (req, res) => {
     });
   }
 };
-
-
-// ================== travail de la semaine =============================
-// 1. logs et audits

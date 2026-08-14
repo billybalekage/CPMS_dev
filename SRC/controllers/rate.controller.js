@@ -6,7 +6,28 @@ exports.createRate = async (req, res) => {
     const { name, description, amount, credit, clientType } = req.body;
 
     if (!name || !amount || !credit || !clientType) {
-      return res.status(400).json({ message: "Les champs obligatoires sont requis" });
+      return res
+        .status(400)
+        .json({ message: "Les champs obligatoires sont requis" });
+    }
+
+    const numericAmount = Number(amount);
+    const numericCredit = Number(credit);
+    if (
+      !Number.isFinite(numericAmount) ||
+      numericAmount <= 0 ||
+      !Number.isFinite(numericCredit) ||
+      numericCredit <= 0
+    ) {
+      return res
+        .status(400)
+        .json({
+          message: "Le montant et le crédit doivent être des nombres positifs",
+        });
+    }
+
+    if (!["prive", "entreprise", "usine"].includes(clientType)) {
+      return res.status(400).json({ message: "Type de client invalide" });
     }
 
     const rate = new RateModel({
@@ -23,7 +44,12 @@ exports.createRate = async (req, res) => {
     return res.status(201).json({ success: true, rate });
   } catch (error) {
     console.error("Erreur createRate:", error);
-    return res.status(500).json({ message: "Erreur lors de la création du tarif", error: error.message });
+    return res
+      .status(500)
+      .json({
+        message: "Erreur lors de la création du tarif",
+        error: error.message,
+      });
   }
 };
 
@@ -41,7 +67,12 @@ exports.getAllRates = async (req, res) => {
     return res.status(200).json({ success: true, count: rates.length, rates });
   } catch (error) {
     console.error("Erreur getAllRates:", error);
-    return res.status(500).json({ message: "Erreur lors de la récupération des tarifs", error: error.message });
+    return res
+      .status(500)
+      .json({
+        message: "Erreur lors de la récupération des tarifs",
+        error: error.message,
+      });
   }
 };
 
@@ -58,7 +89,12 @@ exports.getRateById = async (req, res) => {
     return res.status(200).json({ success: true, rate });
   } catch (error) {
     console.error("Erreur getRateById:", error);
-    return res.status(500).json({ message: "Erreur lors de la récupération du tarif", error: error.message });
+    return res
+      .status(500)
+      .json({
+        message: "Erreur lors de la récupération du tarif",
+        error: error.message,
+      });
   }
 };
 
@@ -75,17 +111,45 @@ exports.updateRate = async (req, res) => {
 
     if (name) rate.name = name;
     if (description) rate.description = description;
-    if (amount) rate.amount = amount;
-    if (credit) rate.credit = credit;
-    if (clientType) rate.clientType = clientType;
+    if (amount !== undefined) {
+      const numericAmount = Number(amount);
+      if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+        return res
+          .status(400)
+          .json({ message: "Le montant doit être un nombre positif" });
+      }
+      rate.amount = numericAmount;
+    }
+    if (credit !== undefined) {
+      const numericCredit = Number(credit);
+      if (!Number.isFinite(numericCredit) || numericCredit <= 0) {
+        return res
+          .status(400)
+          .json({ message: "Le crédit doit être un nombre positif" });
+      }
+      rate.credit = numericCredit;
+    }
+    if (clientType) {
+      if (!["prive", "entreprise", "usine"].includes(clientType)) {
+        return res.status(400).json({ message: "Type de client invalide" });
+      }
+      rate.clientType = clientType;
+    }
     if (status) rate.status = status;
 
     await rate.save();
 
-    return res.status(200).json({ success: true, message: "Tarif mis à jour", rate });
+    return res
+      .status(200)
+      .json({ success: true, message: "Tarif mis à jour", rate });
   } catch (error) {
     console.error("Erreur updateRate:", error);
-    return res.status(500).json({ message: "Erreur lors de la mise à jour du tarif", error: error.message });
+    return res
+      .status(500)
+      .json({
+        message: "Erreur lors de la mise à jour du tarif",
+        error: error.message,
+      });
   }
 };
 

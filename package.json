@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "server": "nodemon server.js",
+    "db:seedAdmin": "node src/Scripts/seedAdmin.js",
+    "db:generateMeters": "node src/Scripts/generateMeterNumbers.js",
     "diag": "eslint"
   },
   "keywords": [],

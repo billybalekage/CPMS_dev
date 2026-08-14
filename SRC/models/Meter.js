@@ -34,6 +34,10 @@ const meterSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+meterSchema.index({ meterNumber: 1 });
+meterSchema.index({ status: 1, client: 1 });
+meterSchema.index({ createdAt: -1 });
+
 const MeterModel = mongoose.models.Meter || mongoose.model("Meter", meterSchema);
 
 module.exports = MeterModel;

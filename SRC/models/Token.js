@@ -45,6 +45,10 @@ const tokenSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+tokenSchema.index({ code: 1 });
+tokenSchema.index({ client: 1, status: 1 });
+tokenSchema.index({ expiresAt: 1 });
+
 const TokenModel = mongoose.models.Token || mongoose.model("Token", tokenSchema);
 
 module.exports = TokenModel;

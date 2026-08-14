@@ -1,13 +1,13 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const validator = require("validator");
-const cloudinary = require("../services/uploads.service");
+const cloudinary = require("../config/cloudinary");
 
 const UserModel = require("../models/User");
 const OtpModel = require("../models/Otp");
 const { transporter } = require("../services/nodemailer.service");
 const { generateOTP } = require("../services/otpGenerator.service");
-
+const logger = require("../utils/logger");
 
 // createUser
 exports.createUser = async (req, res) => {
@@ -15,9 +15,9 @@ exports.createUser = async (req, res) => {
     const { fullName, email, phone, address, role, status } = req.body;
 
     // 1. Validation des champs obligatoires
-    if (!fullName || !email || !phone || !role) {
+    if (!fullName || !email || !phone) {
       return res.status(400).json({
-        message: "Le nom, l'email, le téléphone et le rôle sont requis",
+        message: "Le nom, l'email et le téléphone sont requis",
       });
     }
 
@@ -33,15 +33,6 @@ exports.createUser = async (req, res) => {
       return res
         .status(400)
         .json({ message: "Cet email est déjà utilisé par un autre compte" });
-    }
-
-    // 4. Sécurité : Vérifier que le rôle n'est pas "admin"
-    // (On utilise une route différente pour créer des admins par sécurité)
-    const allowedRoles = ["accountant", "sales", "technician"];
-    if (!allowedRoles.includes(role)) {
-      return res
-        .status(400)
-        .json({ message: "Rôle non autorisé pour cette opération" });
     }
 
     let profileImageUrl = ""; // URL par défaut vide
@@ -74,8 +65,6 @@ exports.createUser = async (req, res) => {
           .json({ message: "Erreur lors de l'upload de l'image de profil." });
       }
     }
-    // 5. Génération d'un mot de passe temporaire par défaut
-    // L'utilisateur devra le changer à sa première connexion
     const tempPassword = "ChangeMe2026!";
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(tempPassword, salt);
@@ -145,8 +134,6 @@ exports.loginUser = async (req, res) => {
     }
 
     const cleanEmail = validator.normalizeEmail(email) || email.toLowerCase();
-    console.log("Email envoyé:", email);
-    console.log("Email nettoyé:", cleanEmail);
 
     // 2. Recherche de l'utilisateur (on récupère le password masqué)
     const user = await UserModel.findOne({ email: cleanEmail }).select(
@@ -166,9 +153,7 @@ exports.loginUser = async (req, res) => {
     }
 
     // 4. Vérification du mot de passe
-    console.log("Mot de passe en base (hash):", user.password);
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log("Résultat match:", isMatch);
     if (!isMatch) {
       return res.status(401).json({ message: "Identifiants invalides" });
     }
@@ -240,15 +225,37 @@ exports.loginUser = async (req, res) => {
 // getAllUser
 exports.getAllUsers = async (req, res) => {
   try {
-    // 1. On récupère tous les utilisateurs sauf les admins
-    // .select("-password") est CRUCIAL pour ne pas envoyer les hashs au frontend
-    const users = await UserModel.find({ role: { $ne: "admin" } })
-      .select("-password")
-      .sort({ createdAt: -1 }); // Les plus récents en premier
+    const { page = 1, limit = 10, role, status, search } = req.query;
+    const query = { role: { $ne: "admin" } };
+
+    if (role) query.role = role;
+    if (status) query.status = status;
+    if (search) {
+      query.$or = [
+        { fullName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const pageNumber = Math.max(1, parseInt(page, 10) || 1);
+    const pageSize = Math.max(1, Math.min(100, parseInt(limit, 10) || 10));
+    const skip = (pageNumber - 1) * pageSize;
+
+    const [users, total] = await Promise.all([
+      UserModel.find(query)
+        .select("-password")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(pageSize),
+      UserModel.countDocuments(query),
+    ]);
 
     res.status(200).json({
       success: true,
       count: users.length,
+      total,
+      page: pageNumber,
+      pages: Math.ceil(total / pageSize),
       users,
     });
   } catch (error) {
@@ -354,7 +361,7 @@ exports.deleteUserById = async (req, res) => {
   }
 };
 
-// toggleUserStatus, on ne supprime pas vraiment, on bascule juste entre "active" et "inactive"
+// on bascule  entre "active" et "inactive"
 exports.toggleUserStatus = async (req, res) => {
   try {
     const { id } = req.params; // L'ID de l'utilisateur à modifier
