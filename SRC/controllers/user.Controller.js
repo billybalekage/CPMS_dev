@@ -1,21 +1,13 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const validator = require("validator");
-<<<<<<< HEAD
-const cloudinary = require("../services/uploads.service");
-=======
 const cloudinary = require("../config/cloudinary");
->>>>>>> dev
 
 const UserModel = require("../models/User");
 const OtpModel = require("../models/Otp");
 const { transporter } = require("../services/nodemailer.service");
 const { generateOTP } = require("../services/otpGenerator.service");
-<<<<<<< HEAD
-
-=======
 const logger = require("../utils/logger");
->>>>>>> dev
 
 // createUser
 exports.createUser = async (req, res) => {
@@ -23,15 +15,9 @@ exports.createUser = async (req, res) => {
     const { fullName, email, phone, address, role, status } = req.body;
 
     // 1. Validation des champs obligatoires
-<<<<<<< HEAD
-    if (!fullName || !email || !phone || !role) {
-      return res.status(400).json({
-        message: "Le nom, l'email, le téléphone et le rôle sont requis",
-=======
     if (!fullName || !email || !phone) {
       return res.status(400).json({
         message: "Le nom, l'email et le téléphone sont requis",
->>>>>>> dev
       });
     }
 
@@ -49,18 +35,6 @@ exports.createUser = async (req, res) => {
         .json({ message: "Cet email est déjà utilisé par un autre compte" });
     }
 
-<<<<<<< HEAD
-    // 4. Sécurité : Vérifier que le rôle n'est pas "admin"
-    // (On utilise une route différente pour créer des admins par sécurité)
-    const allowedRoles = ["accountant", "sales", "technician"];
-    if (!allowedRoles.includes(role)) {
-      return res
-        .status(400)
-        .json({ message: "Rôle non autorisé pour cette opération" });
-    }
-
-=======
->>>>>>> dev
     let profileImageUrl = ""; // URL par défaut vide
     // Si l'admin a sélectionné un fichier image
     if (req.file) {
@@ -91,11 +65,6 @@ exports.createUser = async (req, res) => {
           .json({ message: "Erreur lors de l'upload de l'image de profil." });
       }
     }
-<<<<<<< HEAD
-    // 5. Génération d'un mot de passe temporaire par défaut
-    // L'utilisateur devra le changer à sa première connexion
-=======
->>>>>>> dev
     const tempPassword = "ChangeMe2026!";
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(tempPassword, salt);
@@ -165,11 +134,6 @@ exports.loginUser = async (req, res) => {
     }
 
     const cleanEmail = validator.normalizeEmail(email) || email.toLowerCase();
-<<<<<<< HEAD
-    console.log("Email envoyé:", email);
-    console.log("Email nettoyé:", cleanEmail);
-=======
->>>>>>> dev
 
     // 2. Recherche de l'utilisateur (on récupère le password masqué)
     const user = await UserModel.findOne({ email: cleanEmail }).select(
@@ -189,13 +153,7 @@ exports.loginUser = async (req, res) => {
     }
 
     // 4. Vérification du mot de passe
-<<<<<<< HEAD
-    console.log("Mot de passe en base (hash):", user.password);
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log("Résultat match:", isMatch);
-=======
-    const isMatch = await bcrypt.compare(password, user.password);
->>>>>>> dev
     if (!isMatch) {
       return res.status(401).json({ message: "Identifiants invalides" });
     }
@@ -267,13 +225,6 @@ exports.loginUser = async (req, res) => {
 // getAllUser
 exports.getAllUsers = async (req, res) => {
   try {
-<<<<<<< HEAD
-    // 1. On récupère tous les utilisateurs sauf les admins
-    // .select("-password") est CRUCIAL pour ne pas envoyer les hashs au frontend
-    const users = await UserModel.find({ role: { $ne: "admin" } })
-      .select("-password")
-      .sort({ createdAt: -1 }); // Les plus récents en premier
-=======
     const { page = 1, limit = 10, role, status, search } = req.query;
     const query = { role: { $ne: "admin" } };
 
@@ -298,17 +249,13 @@ exports.getAllUsers = async (req, res) => {
         .limit(pageSize),
       UserModel.countDocuments(query),
     ]);
->>>>>>> dev
 
     res.status(200).json({
       success: true,
       count: users.length,
-<<<<<<< HEAD
-=======
       total,
       page: pageNumber,
       pages: Math.ceil(total / pageSize),
->>>>>>> dev
       users,
     });
   } catch (error) {
@@ -414,11 +361,7 @@ exports.deleteUserById = async (req, res) => {
   }
 };
 
-<<<<<<< HEAD
-// toggleUserStatus, on ne supprime pas vraiment, on bascule juste entre "active" et "inactive"
-=======
 // on bascule  entre "active" et "inactive"
->>>>>>> dev
 exports.toggleUserStatus = async (req, res) => {
   try {
     const { id } = req.params; // L'ID de l'utilisateur à modifier

@@ -12,10 +12,6 @@ const { generateOTP } = require("../services/otpGenerator.service");
 // Register admin
 exports.registerUser = async (req, res) => {
   try {
-<<<<<<< HEAD
-
-=======
->>>>>>> dev
     // recuperer les element dans la requette body (ici le model user)
     const { fullName, email, phone, address, password, status } = req.body;
 
@@ -34,17 +30,9 @@ exports.registerUser = async (req, res) => {
 
     // verifier longeurs de mot de pass
     if (password.length < 6) {
-<<<<<<< HEAD
-      return res
-        .status(400)
-        .json({
-          message: "Le mot de passe doit contenir au moins 6 caractères",
-        });
-=======
       return res.status(400).json({
         message: "Le mot de passe doit contenir au moins 6 caractères",
       });
->>>>>>> dev
     }
 
     // Verifier si l'email existe deja dans la base de donnees
@@ -69,10 +57,6 @@ exports.registerUser = async (req, res) => {
       profileImagePublicId = result.public_id;
     }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> dev
     // Hasher mot de passe
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -91,23 +75,13 @@ exports.registerUser = async (req, res) => {
           }
         : {},
       status,
-<<<<<<< HEAD
-      role: "admin",
-      isAccountVerified: false, 
-=======
       role: "admin", // Forcere le role sur cette route
       isAccountVerified: false,
->>>>>>> dev
     });
 
     await user.save(); // Enregister le nouveau user
 
     // Generer le token
-<<<<<<< HEAD
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
-=======
     const token = jwt.sign(
       { id: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
@@ -115,7 +89,6 @@ exports.registerUser = async (req, res) => {
         expiresIn: "7d",
       },
     );
->>>>>>> dev
 
     // Enregistrer le token dans les cookies
     res.cookie("token", token, {
@@ -125,10 +98,6 @@ exports.registerUser = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-<<<<<<< HEAD
-
-=======
->>>>>>> dev
     // email de bienvenus
     transporter
       .sendMail({
@@ -139,24 +108,11 @@ exports.registerUser = async (req, res) => {
       })
       .catch((err) => console.error("Email Error:", err));
 
-<<<<<<< HEAD
-    
-    // SMS de bienvenue
-
-
-    const { password: _, ...userWithoutPassword } = user.toObject();
-
-    //returner une reponse 
-    res.status(201).json({
-      message: "Utilisateur enregistré avec succès",
-      user: userWithoutPassword,
-=======
     const { password: _, ...userWithoutPassword } = user.toObject(); // supprimer le mot de passe dans la response
 
     res.status(201).json({
       message: "Utilisateur enregistré avec succès",
       user: userWithoutPassword, // pas de mot de pass dans la response
->>>>>>> dev
       token,
     });
   } catch (error) {
@@ -170,11 +126,6 @@ exports.registerUser = async (req, res) => {
 // Connection admin
 exports.loginUser = async (req, res) => {
   try {
-<<<<<<< HEAD
-
-
-=======
->>>>>>> dev
     const { email, password } = req.body;
 
     //  Validation des champs
@@ -190,27 +141,15 @@ exports.loginUser = async (req, res) => {
     // netoyer l'email
     const cleanEmail = validator.normalizeEmail(email) || email.toLowerCase();
 
-<<<<<<< HEAD
-    // On sélectionne le mot de passe 
-=======
     // On sélectionne le mot de passe
->>>>>>> dev
     const user = await UserModel.findOne({ email: cleanEmail }).select(
       "+password",
     );
 
-<<<<<<< HEAD
-    // vérification de l'existence et du rôle
-    if (!user || user.role !== "admin") {
-      return res.status(403).json({
-        message: "Accès refusé",
-      });
-=======
     if (!user) {
       return res
         .status(401)
         .json({ message: "email ou mot de passe manquant" });
->>>>>>> dev
     }
 
     // Vérification du mot de passe
@@ -225,15 +164,11 @@ exports.loginUser = async (req, res) => {
       const otp = generateOTP(6); // Generer un code de connexion a 6 chiffres
 
       // Supprimer les OTPs existants non utilisés pour ce type et utilisateur
-<<<<<<< HEAD
-      await OtpModel.deleteMany({ userId: user._id, type: "two_factor", isUsed: false });
-=======
       await OtpModel.deleteMany({
         userId: user._id,
         type: "two_factor",
         isUsed: false,
       });
->>>>>>> dev
 
       // Créer un nouvel OTP
       await OtpModel.create({
@@ -266,11 +201,7 @@ exports.loginUser = async (req, res) => {
 
     // 5. Génération du Token (Si pas de 2FA)
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-<<<<<<< HEAD
-      expiresIn: "7d", 
-=======
       expiresIn: "7d",
->>>>>>> dev
     });
 
     res.cookie("token", token, {
@@ -303,13 +234,7 @@ exports.verifyLoginOtp = async (req, res) => {
     const { userId, otp } = req.body;
 
     if (!userId || !otp) {
-<<<<<<< HEAD
-      return res
-        .status(400)
-        .json({ message: "Données manquantes (ID ou Code)" });
-=======
       return res.status(400).json({ message: "Données manquantes" });
->>>>>>> dev
     }
 
     const user = await UserModel.findById(userId);
@@ -336,15 +261,12 @@ exports.verifyLoginOtp = async (req, res) => {
       expiresIn: "7d",
     });
 
-<<<<<<< HEAD
-=======
     await OtpModel.deleteMany({
       userId: user._id,
       type: "email_verification",
       isUsed: false,
     });
 
->>>>>>> dev
     // Stockage du token dans le cookie (Cohérence avec logout/login)
     res.cookie("token", token, {
       httpOnly: true,
@@ -372,10 +294,6 @@ exports.verifyLoginOtp = async (req, res) => {
   }
 };
 
-<<<<<<< HEAD
-
-=======
->>>>>>> dev
 // Deconnection de l'utilisateur ( supprimer le token du cookie)
 exports.logoutUser = (req, res) => {
   res.clearCookie("token", {
@@ -408,15 +326,11 @@ exports.sendVerifyOtp = async (req, res) => {
     const otp = generateOTP(6);
 
     // Supprimer les OTPs existants non utilisés pour ce type et utilisateur
-<<<<<<< HEAD
-    await OtpModel.deleteMany({ userId: user._id, type: "email_verification", isUsed: false });
-=======
     await OtpModel.deleteMany({
       userId: user._id,
       type: "email_verification",
       isUsed: false,
     });
->>>>>>> dev
 
     // Créer un nouvel OTP
     await OtpModel.create({
@@ -434,10 +348,6 @@ exports.sendVerifyOtp = async (req, res) => {
       text: `Votre code de vérification est : ${otp}. Il expire dans 10 minutes.`,
     };
 
-<<<<<<< HEAD
-
-=======
->>>>>>> dev
     // Envoi du mail
     try {
       await transporter.sendMail(mailOptions);
@@ -451,10 +361,6 @@ exports.sendVerifyOtp = async (req, res) => {
           "Erreur lors de l'envoi de l'email, veuillez réessayer plus tard",
       });
     }
-<<<<<<< HEAD
-
-=======
->>>>>>> dev
   } catch (error) {
     console.error("Erreur dans sendVerifyOtp:", error);
     res.status(500).json({
@@ -467,10 +373,6 @@ exports.sendVerifyOtp = async (req, res) => {
 // Verifier le otp et verifier le compte
 exports.verifyEmail = async (req, res) => {
   try {
-<<<<<<< HEAD
-
-=======
->>>>>>> dev
     // on recupere l'ID depuis le middleware
     const userId = req.userId;
     const { otp } = req.body; // otp stoke dans le body
@@ -562,15 +464,11 @@ exports.sendResetOtp = async (req, res) => {
     const otp = generateOTP(6);
 
     // Supprimer les OTPs existants non utilisés pour ce type et utilisateur
-<<<<<<< HEAD
-    await OtpModel.deleteMany({ userId: user._id, type: "reset_password", isUsed: false });
-=======
     await OtpModel.deleteMany({
       userId: user._id,
       type: "reset_password",
       isUsed: false,
     });
->>>>>>> dev
 
     // Créer un nouvel OTP
     await OtpModel.create({
@@ -580,10 +478,6 @@ exports.sendResetOtp = async (req, res) => {
       expiresAt: new Date(Date.now() + 10 * 60 * 1000),
     });
 
-<<<<<<< HEAD
-
-=======
->>>>>>> dev
     const mailOptions = {
       from: process.env.SENDER_EMAIL,
       to: user.email,
@@ -617,17 +511,9 @@ exports.resetPassword = async (req, res) => {
 
   // Vérification de la longueur du nouveau mot de passe
   if (newPassword.length < 6) {
-<<<<<<< HEAD
-    return res
-      .status(400)
-      .json({
-        message: "Le mot de passe doit contenir au moins 6 caractères",
-      });
-=======
     return res.status(400).json({
       message: "Le mot de passe doit contenir au moins 6 caractères",
     });
->>>>>>> dev
   }
 
   try {
@@ -648,13 +534,9 @@ exports.resetPassword = async (req, res) => {
     });
 
     if (!otpDoc) {
-<<<<<<< HEAD
-      return res.status(400).json({ message: "Code de réinitialisation invalide ou expiré" });
-=======
       return res
         .status(400)
         .json({ message: "Code de réinitialisation invalide ou expiré" });
->>>>>>> dev
     }
 
     // Hachage du nouveau mot de passe
@@ -708,22 +590,14 @@ exports.updateUser = async (req, res) => {
   } catch (error) {
     res
       .status(500)
-<<<<<<< HEAD
-      .json({ message: "Erreur mis a jour profil", error: error.message });   
-=======
       .json({ message: "Erreur mis a jour profil", error: error.message });
->>>>>>> dev
   }
 };
 
 // Changer des mot de pass
 exports.changePassword = async (req, res) => {
   try {
-<<<<<<< HEAD
-    const { oldPassword, newPassword } = req.body; 
-=======
     const { oldPassword, newPassword } = req.body;
->>>>>>> dev
 
     // Validation des entrées
     if (!oldPassword || !newPassword) {
@@ -806,26 +680,15 @@ exports.updateProfileImage = async (req, res) => {
         {
           folder: "cpms_profiles",
           transformation: [
-<<<<<<< HEAD
-            { width: 500, height: 500, crop: "fill", gravity: "face" }, 
-=======
             { width: 500, height: 500, crop: "fill", gravity: "face" },
->>>>>>> dev
           ],
         },
         (error, result) => {
           if (error) reject(error);
-<<<<<<< HEAD
-          else resolve(result); 
-        },
-      );
-      uploadStream.end(req.file.buffer); 
-=======
           else resolve(result);
         },
       );
       uploadStream.end(req.file.buffer);
->>>>>>> dev
     });
 
     // Mise à jour en base de données
@@ -845,11 +708,7 @@ exports.updateProfileImage = async (req, res) => {
   }
 };
 
-<<<<<<< HEAD
-// Suprimer le user. 
-=======
 // Suprimer le user.
->>>>>>> dev
 exports.deleteAccount = async (req, res) => {
   try {
     const userId = req.userId;
@@ -863,10 +722,6 @@ exports.deleteAccount = async (req, res) => {
     // Supprimer l'image sur Cloudinary si elle existe
     if (user.profileImage && user.profileImage.includes("cloudinary")) {
       try {
-<<<<<<< HEAD
-        
-=======
->>>>>>> dev
         const publicId = getPublicIdFromUrl(user.profileImage);
 
         // 'cpms_profiles/' si getPublicId ne le fait pas
@@ -885,11 +740,7 @@ exports.deleteAccount = async (req, res) => {
     res.clearCookie("token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-<<<<<<< HEAD
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", 
-=======
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
->>>>>>> dev
     });
 
     return res.status(200).json({
@@ -904,10 +755,3 @@ exports.deleteAccount = async (req, res) => {
     });
   }
 };
-<<<<<<< HEAD
-
-
-// ================== travail de la semaine =============================
-// 1. logs et audits
-=======
->>>>>>> dev

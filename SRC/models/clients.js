@@ -20,15 +20,6 @@ const clientSchema = new mongoose.Schema(
       ],
     },
     address: { type: String, required: true },
-<<<<<<< HEAD
-    meterId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Meter",
-      required: true,
-      unique: true,
-    },
-    meterNumber: { type: String, required: true, unique: true,  }, // numero du compteur
-=======
     meter: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Meter",
@@ -40,7 +31,6 @@ const clientSchema = new mongoose.Schema(
       default: null,
     },
     meterNumber: { type: String, required: true, unique: true },
->>>>>>> dev
     clientType: {
       type: String,
       enum: ["prive", "entreprise", "usine"],
@@ -56,11 +46,6 @@ const clientSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-<<<<<<< HEAD
-const clientModel = mongoose.models.Client || mongoose.model("Client", clientSchema);
-
-module.exports = clientModel;
-=======
 clientSchema.index({ email: 1 });
 clientSchema.index({ clientType: 1, status: 1 });
 clientSchema.index({ createdAt: -1 });
@@ -69,4 +54,3 @@ const clientModel =
   mongoose.models.Client || mongoose.model("Client", clientSchema);
 
 module.exports = clientModel;
->>>>>>> dev

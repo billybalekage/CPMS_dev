@@ -1,26 +1,19 @@
 const mongoose = require("mongoose");
 
 const connectDB = async () => {
+  const mongoUri =
+    process.env.MONGO_URI ||
+    process.env.DB_URL ||
+    "mongodb://localhost:27017/cpms_db";
+
   try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log("MongoDB connecté");
-  } catch (err) {
-    console.error(err);
-    setTimeout(connectDB, 5000); // retry après 5s
-
-    if (!process.env.MONGO_URI) {
-      throw new Error("MONGO_URI is not defined");
-    }
-
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(mongoUri);
     console.log("MongoDB connecté");
     return true;
   } catch (err) {
     console.error("MongoDB connection failed:", err.message);
-    setTimeout(() => {
-      connectDB().catch(() => undefined);
-    }, 5000);
-    return false;
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    return connectDB();
   }
 };
 
