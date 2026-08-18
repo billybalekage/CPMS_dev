@@ -1,6 +1,7 @@
 const multer = require("multer");
 const path = require("path");
 
+<<<<<<< HEAD
 // Définir le stockage en mémoire (Memory Storage)
 const storage = multer.memoryStorage();
 
@@ -12,6 +13,17 @@ const fileFilter = (req, file, cb) => {
     path.extname(file.originalname).toLowerCase(),
   );
   // Vérifie le type MIME
+=======
+
+const storage = multer.memoryStorage();
+
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = /jpeg|jpg|png|webp/;
+  const extname = allowedTypes.test(
+    path.extname(file.originalname).toLowerCase(),
+  );
+  
+>>>>>>> dev
   const mimetype = allowedTypes.test(file.mimetype);
 
   if (extname && mimetype) {
@@ -25,7 +37,11 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   limits: {
+<<<<<<< HEAD
     fileSize: 2 * 1024 * 1024, // Limite à 2 Mo
+=======
+    fileSize: 2 * 1024 * 1024,
+>>>>>>> dev
   },
   fileFilter: fileFilter,
 });

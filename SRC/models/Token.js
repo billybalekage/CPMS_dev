@@ -42,9 +42,20 @@ const tokenSchema = new mongoose.Schema(
       type: Date,
     },
   },
+<<<<<<< HEAD
   { timestamps: true }
 );
 
 const TokenModel = mongoose.models.Token || mongoose.model("Token", tokenSchema);
+=======
+  { timestamps: true },
+);
+
+tokenSchema.index({ client: 1, status: 1 });
+tokenSchema.index({ expiresAt: 1 });
+
+const TokenModel =
+  mongoose.models.Token || mongoose.model("Token", tokenSchema);
+>>>>>>> dev
 
 module.exports = TokenModel;

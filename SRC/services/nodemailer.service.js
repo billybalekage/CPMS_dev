@@ -1,5 +1,6 @@
 const nodemailer = require("nodemailer");
 
+<<<<<<< HEAD
 // exports.transporter = nodemailer.createTransport({
 //     host : process.env.SMTP_SERVER,
 //     port: process.env.SMTP_PORT,
@@ -10,6 +11,8 @@ const nodemailer = require("nodemailer");
 //     }
 // })
 
+=======
+>>>>>>> dev
 exports.transporter = nodemailer.createTransport({
   host: process.env.SMTP_SERVER,
   port: process.env.SMTP_PORT,

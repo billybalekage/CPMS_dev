@@ -1,4 +1,5 @@
 require("dotenv").config();
+<<<<<<< HEAD
 const express = require("express");
 const multer = require("multer"); 
 const connectDB = require("./SRC/config/db");
@@ -70,4 +71,43 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 7000;
 app.listen(PORT, () => {
   console.log(`Serveur lancé sur le port ${PORT}`);
+=======
+const http = require("http");
+const createApp = require("./SRC/jobs/app");
+const { logger } = require("./SRC/jobs/logger");
+const { env } = require("./SRC/jobs/config");
+const connectDB = require("./SRC/config/db");
+
+const app = createApp();
+const server = http.createServer(app);
+
+server.keepAliveTimeout = env.KEEP_ALIVE_TIMEOUT;
+server.headersTimeout = env.HEADERS_TIMEOUT;
+server.requestTimeout = env.REQUEST_TIMEOUT;
+
+app.get("/", (req, res) => {
+  res.send("l'API CPMS en marche...");
+});
+
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "API healthy",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+const PORT = env.PORT || 7000;
+
+const startServer = () => {
+  server.listen(PORT, () => {
+    logger.info(`Le serveur tourne sur le port ${PORT}`);
+  });
+};
+
+startServer();
+
+connectDB().catch((error) => {
+  logger.error("Database connection failed", { error: error.message });
+>>>>>>> dev
 });

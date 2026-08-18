@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const clientModel = require("../models/clients")
 const MeterModel = require("../models/Meter");
 
@@ -16,6 +17,11 @@ const getClientTypeFromMeter = (meterNumber) => {
       return "unknown";
   }
 };
+=======
+const clientModel = require("../models/clients");
+const MeterModel = require("../models/Meter");
+const { getClientTypeFromMeter } = require("../utils/meterNumber");
+>>>>>>> dev
 
 // Enregister un nouveau client
 exports.createClient = async (req, res) => {
@@ -28,21 +34,38 @@ exports.createClient = async (req, res) => {
         .json({ message: "Veuillez renseigner tous les champs" });
     }
 
+<<<<<<< HEAD
     // On recupere l'id du compteur (recherche des compteurs non attribuer a un client )
     const meter = await MeterModel.findById(meterId);
+=======
+    const meterReferenceId = meterId || req.body.meter;
+
+    // On recupere l'id du compteur (recherche des compteurs non attribuer a un client )
+    const meter = await MeterModel.findById(meterReferenceId);
+>>>>>>> dev
     if (!meter) {
       return res.status(404).json({ message: "Compteur introuvable" });
     }
 
     // dans le cas ou le compteur est deja utilise par un autre client
+<<<<<<< HEAD
     if (meter.client) { 
+=======
+    if (meter.client) {
+>>>>>>> dev
       return res
         .status(400)
         .json({ message: "Ce compteur est déjà attribué à un client" });
     }
 
     // Verifier si le client existe (verification par l'id du compteur) si le compteur est attribue a un client
+<<<<<<< HEAD
     const existingClient = await clientModel.findOne({ meterId: meter._id });
+=======
+    const existingClient = await clientModel.findOne({
+      $or: [{ meter: meter._id }, { meterId: meter._id }],
+    });
+>>>>>>> dev
     if (existingClient) {
       return res
         .status(400)
@@ -61,6 +84,10 @@ exports.createClient = async (req, res) => {
       fullName,
       phone,
       email,
+<<<<<<< HEAD
+=======
+      meter: meter._id,
+>>>>>>> dev
       meterId: meter._id,
       meterNumber: meter.meterNumber,
       address,
@@ -75,7 +102,11 @@ exports.createClient = async (req, res) => {
     try {
       await meter.save(); // Enregister les modif
     } catch (meterError) {
+<<<<<<< HEAD
       // si erreur dans l'attribution, on annule la creation du client
+=======
+      // si erreur dans l'attribution du compteurs, on annule la creation du client
+>>>>>>> dev
       await clientModel.findByIdAndDelete(newClient._id);
       return res.status(500).json({
         success: false,
@@ -86,7 +117,10 @@ exports.createClient = async (req, res) => {
     }
 
     // Envoyer un SMS de confirmation au client
+<<<<<<< HEAD
     
+=======
+>>>>>>> dev
 
     return res.status(201).json({
       success: true,
@@ -144,16 +178,57 @@ exports.getClientType = async (req, res) => {
 // Récupérer tous les clients
 exports.getAllClient = async (req, res) => {
   try {
+<<<<<<< HEAD
 
     // On recupere le client avec le numero de compteur, le status, localisation du compteur
     const clients = await clientModel.find().populate("meter", "meterNumber status location model");
 
     // S'il y a pas des client
+=======
+    const { page = 1, limit = 10, status, clientType, search } = req.query;
+    const query = {};
+
+    if (status) query.status = status;
+    if (clientType) query.clientType = clientType;
+    if (search) {
+      query.$or = [
+        { fullName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { meterNumber: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const pageNumber = Math.max(1, parseInt(page, 10) || 1);
+    const pageSize = Math.max(1, Math.min(100, parseInt(limit, 10) || 10));
+    const skip = (pageNumber - 1) * pageSize;
+
+    const [clients, total] = await Promise.all([
+      clientModel
+        .find(query)
+        .populate("meter", "meterNumber status location model")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(pageSize),
+      clientModel.countDocuments(query),
+    ]);
+
+>>>>>>> dev
     if (!clients || clients.length === 0) {
       return res.status(404).json({ message: "Aucun client trouvé" });
     }
 
+<<<<<<< HEAD
     res.status(200).json({ success: true, count: clients.length, clients });
+=======
+    res.status(200).json({
+      success: true,
+      count: clients.length,
+      total,
+      page: pageNumber,
+      pages: Math.ceil(total / pageSize),
+      clients,
+    });
+>>>>>>> dev
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -167,7 +242,10 @@ exports.getAllClient = async (req, res) => {
   }
 };
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> dev
 // Récupérer un client par son ID
 exports.getClientById = async (req, res) => {
   try {
@@ -180,7 +258,13 @@ exports.getClientById = async (req, res) => {
     }
 
     // Recuperer le client
+<<<<<<< HEAD
     const client = await clientModel.findById(id).populate("meter", "meterNumber status location model");
+=======
+    const client = await clientModel
+      .findById(id)
+      .populate("meter", "meterNumber status location model");
+>>>>>>> dev
 
     // verification de l'existance du client
     if (!client) {
@@ -213,11 +297,22 @@ exports.updateClient = async (req, res) => {
     }
 
     if (client.status === "inactif") {
+<<<<<<< HEAD
       return res.status(400).json({message: "Impossible de modifier le compteur d'un client inactif",});
     }
 
     let oldMeter = null;
     if (meterId && meterId.toString() !== client.meter?.toString()) {
+=======
+      return res.status(400).json({
+        message: "Impossible de modifier le compteur d'un client inactif",
+      });
+    }
+
+    let oldMeter = null;
+    const currentMeterId = client.meter || client.meterId;
+    if (meterId && meterId.toString() !== currentMeterId?.toString()) {
+>>>>>>> dev
       const newMeter = await MeterModel.findById(meterId);
       if (!newMeter) {
         return res.status(404).json({ message: "Compteur introuvable" });
@@ -236,7 +331,11 @@ exports.updateClient = async (req, res) => {
           .json({ message: "Type de client invalide, compteur non reconnu" });
       }
 
+<<<<<<< HEAD
       oldMeter = await MeterModel.findById(client.meter);
+=======
+      oldMeter = await MeterModel.findById(currentMeterId);
+>>>>>>> dev
       if (oldMeter) {
         oldMeter.client = null;
         oldMeter.status = "unassigned";
@@ -247,6 +346,10 @@ exports.updateClient = async (req, res) => {
       await newMeter.save();
 
       client.meter = newMeter._id;
+<<<<<<< HEAD
+=======
+      client.meterId = newMeter._id;
+>>>>>>> dev
       client.meterNumber = newMeter.meterNumber;
       client.clientType = clientType;
       if (oldMeter) await oldMeter.save();
@@ -291,11 +394,17 @@ exports.changeClientMeter = async (req, res) => {
     }
 
     if (client.status === "inactif") {
+<<<<<<< HEAD
       return res
         .status(400)
         .json({
           message: "Impossible de changer le compteur d'un client inactif",
         });
+=======
+      return res.status(400).json({
+        message: "Impossible de changer le compteur d'un client inactif",
+      });
+>>>>>>> dev
     }
 
     // verifier si le compteur extste
@@ -319,7 +428,11 @@ exports.changeClientMeter = async (req, res) => {
         .json({ message: "Type de client invalide, compteur non reconnu" });
     }
 
+<<<<<<< HEAD
     const oldMeter = await MeterModel.findById(client.meter);
+=======
+    const oldMeter = await MeterModel.findById(client.meter || client.meterId);
+>>>>>>> dev
     if (oldMeter) {
       oldMeter.client = null;
       oldMeter.status = "unassigned";
@@ -331,6 +444,10 @@ exports.changeClientMeter = async (req, res) => {
     await newMeter.save();
 
     client.meter = newMeter._id;
+<<<<<<< HEAD
+=======
+    client.meterId = newMeter._id;
+>>>>>>> dev
     client.meterNumber = newMeter.meterNumber;
     client.clientType = clientType;
     await client.save();
@@ -369,8 +486,13 @@ exports.deleteClient = async (req, res) => {
     }
 
     // Retirer le compteur affecter au client a supprimer et changer sont status == unassigned
+<<<<<<< HEAD
     if (client.meter) {
       const meter = await MeterModel.findById(client.meter);
+=======
+    if (client.meter || client.meterId) {
+      const meter = await MeterModel.findById(client.meter || client.meterId);
+>>>>>>> dev
       if (meter) {
         meter.client = null;
         meter.status = "unassigned";
@@ -384,6 +506,7 @@ exports.deleteClient = async (req, res) => {
       .status(200)
       .json({ success: true, message: "Client supprimé avec succès" });
   } catch (error) {
+<<<<<<< HEAD
     res
       .status(500)
       .json({
@@ -391,11 +514,19 @@ exports.deleteClient = async (req, res) => {
         message: "Erreur lors de la suppression du client",
         error: error.message,
       });
+=======
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la suppression du client",
+      error: error.message,
+    });
+>>>>>>> dev
   }
 };
 
 // Basculer le statut du client (actif/inactif)
 exports.ToggleClientStatus = async (req, res) => {
+<<<<<<< HEAD
     try {
         const { id } = req.params;
 
@@ -423,5 +554,45 @@ exports.ToggleClientStatus = async (req, res) => {
     }
 }
 
+=======
+  try {
+    const { id } = req.params;
+
+    // ID manquant
+    if (!id) {
+      return res.status(400).json({ message: "L'ID du client est requis" });
+    }
+
+    // Recuperer le client
+    const client = await clientModel.findById(id);
+
+    // Verifier que le client existe
+    if (!client) {
+      return res.status(404).json({ message: "Client non trouvé" });
+    }
+
+    // status: si c'est actif, on passe a inactif, si c'est inactif on passe a actif
+    const newStatus = client.status === "actif" ? "inactif" : "actif";
+    client.status = newStatus; // aplication du nouveau status
+    await client.save();
+
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: `Statut du client changé à ${newStatus}`,
+        client,
+      });
+  } catch (error) {
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Erreur lors du changement de statut",
+        error: error.message,
+      });
+  }
+};
+>>>>>>> dev
 
 // A Ajouter: supprimer un client si sont status du client est "inactif" pendant 1 annees

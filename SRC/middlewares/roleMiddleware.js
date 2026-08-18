@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // exports.authorize = (...allowedRoles) => {
 //   return (req, res, next) => {
 //     //  Sécurité : Vérifier si l'utilisateur existe (injecté par userAuth)
@@ -29,6 +30,10 @@ exports.authorize = (...roles) => {
     console.log("Utilisateur dans REQ:", req.user.email);
     console.log("Rôle dans REQ:", req.user.role);
     console.log("Rôles autorisés pour cette route:", roles);
+=======
+exports.authorize = (...roles) => {
+  return (req, res, next) => {
+>>>>>>> dev
     // 1. Vérifie si req.user existe (injecté par userAuth)
     if (!req.user) {
       return res.status(401).json({ message: "Utilisateur non authentifié" });

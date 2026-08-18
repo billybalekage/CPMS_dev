@@ -2,8 +2,12 @@ const jwt = require("jsonwebtoken");
 const UserModel = require("../models/User");
 
 exports.userAuth = async (req, res, next) => {
+<<<<<<< HEAD
   // On cherche le token dans les cookies OU dans le header Authorization
   let token = req.cookies.token;
+=======
+  let token = req.cookies.token; // on recupere le token dans les cookies
+>>>>>>> dev
 
   if (
     !token &&
@@ -28,6 +32,10 @@ exports.userAuth = async (req, res, next) => {
     }
 
     req.user = user;
+<<<<<<< HEAD
+=======
+    req.userId = user._id.toString();
+>>>>>>> dev
     next();
   } catch (error) {
     return res.status(401).json({ message: "Token invalide ou expiré" });

@@ -51,6 +51,13 @@ const saleSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+<<<<<<< HEAD
+=======
+saleSchema.index({ client: 1, createdAt: -1 });
+saleSchema.index({ status: 1, createdAt: -1 });
+saleSchema.index({ createdAt: -1 });
+
+>>>>>>> dev
 const SaleModel = mongoose.models.Sale || mongoose.model("Sale", saleSchema);
 
 module.exports = SaleModel;
