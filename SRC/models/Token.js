@@ -42,13 +42,13 @@ const tokenSchema = new mongoose.Schema(
       type: Date,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-tokenSchema.index({ code: 1 });
 tokenSchema.index({ client: 1, status: 1 });
 tokenSchema.index({ expiresAt: 1 });
 
-const TokenModel = mongoose.models.Token || mongoose.model("Token", tokenSchema);
+const TokenModel =
+  mongoose.models.Token || mongoose.model("Token", tokenSchema);
 
 module.exports = TokenModel;

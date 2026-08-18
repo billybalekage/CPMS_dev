@@ -47,10 +47,10 @@ const clientSchema = new mongoose.Schema(
 );
 
 clientSchema.index({ email: 1 });
-clientSchema.index({ meterNumber: 1 });
 clientSchema.index({ clientType: 1, status: 1 });
 clientSchema.index({ createdAt: -1 });
 
-const clientModel = mongoose.models.Client || mongoose.model("Client", clientSchema);
+const clientModel =
+  mongoose.models.Client || mongoose.model("Client", clientSchema);
 
 module.exports = clientModel;
